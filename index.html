@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MetaSSR — Polyglot SSR Framework Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;600;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0a0a0f;
+      --bg2:       #111118;
+      --bg3:       #1a1a26;
+      --surface:   #1e1e2e;
+      --border:    #2a2a3e;
+      --rust:      #ce6f39;
+      --rust-dim:  #8b4a26;
+      --teal:      #2dd4bf;
+      --teal-dim:  #0d7a6f;
+      --purple:    #a78bfa;
+      --purple-dim:#4c3d8a;
+      --green:     #4ade80;
+      --green-dim: #166534;
+      --amber:     #fbbf24;
+      --text:      #e2e2f0;
+      --text-muted:#8888aa;
+      --text-dim:  #4a4a66;
+      --mono:      'JetBrains Mono', monospace;
+      --sans:      'DM Sans', sans-serif;
+      --display:   'Syne', sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2rem;
+      height: 56px;
+      background: rgba(10,10,15,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      font-family: var(--display);
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: var(--text);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .nav-logo span { color: var(--rust); }
+    .nav-badge {
+      font-family: var(--mono);
+      font-size: 10px;
+      background: var(--rust-dim);
+      color: var(--rust);
+      border: 1px solid var(--rust-dim);
+      padding: 2px 7px;
+      border-radius: 4px;
+      letter-spacing: 0.05em;
+    }
+    .nav-links {
+      display: flex; gap: 0; list-style: none;
+    }
+    .nav-links a {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text-muted);
+      text-decoration: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      transition: color 0.15s, background 0.15s;
+    }
+    .nav-links a:hover, .nav-links a.active {
+      color: var(--text);
+      background: var(--surface);
+    }
+    .nav-links a.active { color: var(--teal); }
+
+    /* ── PAGES ── */
+    .page { display: none; padding-top: 56px; min-height: 100vh; }
+    .page.active { display: block; }
+
+    /* ── HERO ── */
+    .hero {
+      padding: 5rem 2rem 4rem;
+      max-width: 900px;
+      margin: 0 auto;
+      position: relative;
+    }
+    .hero-tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--teal);
+      border: 1px solid var(--teal-dim);
+      background: rgba(45,212,191,0.06);
+      padding: 4px 12px;
+      border-radius: 100px;
+      margin-bottom: 1.5rem;
+      letter-spacing: 0.08em;
+    }
+    .hero-tag::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: var(--teal);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+    .hero h1 {
+      font-family: var(--display);
+      font-size: clamp(2.4rem, 6vw, 4rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.2rem;
+    }
+    .hero h1 em { font-style: normal; color: var(--rust); }
+    .hero h1 strong { font-style: normal; color: var(--teal); font-weight: 800; }
+    .hero-sub {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      max-width: 560px;
+      margin-bottom: 2.5rem;
+      line-height: 1.8;
+    }
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s;
+      letter-spacing: 0.03em;
+    }
+    .btn-primary {
+      background: var(--rust);
+      color: #fff;
+    }
+    .btn-primary:hover { background: #d97a47; transform: translateY(-1px); }
+    .btn-ghost {
+      background: var(--surface);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { color: var(--text); border-color: var(--text-dim); transform: translateY(-1px); }
+
+    /* ── BENCHMARK STRIP ── */
+    .bench-strip {
+      margin: 3rem 2rem;
+      max-width: 900px;
+      margin-left: auto; margin-right: auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .bench-item {
+      background: var(--bg2);
+      padding: 1.4rem 1.2rem;
+      text-align: center;
+    }
+    .bench-num {
+      font-family: var(--display);
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--teal);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .bench-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .bench-vs {
+      font-size: 10px;
+      color: var(--green);
+      font-family: var(--mono);
+      margin-top: 4px;
+    }
+
+    /* ── SECTION ── */
+    .section {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 3rem 2rem;
+    }
+    .section-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--rust);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 0.6rem;
+    }
+    .section-title {
+      font-family: var(--display);
+      font-size: 1.8rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+      letter-spacing: -0.02em;
+    }
+    .section-body {
+      color: var(--text-muted);
+      max-width: 560px;
+      margin-bottom: 2rem;
+    }
+
+    /* ── ARCH LAYERS ── */
+    .arch-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      margin: 2rem 0;
+    }
+    .arch-layer {
+      display: flex;
+      align-items: stretch;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      transition: border-color 0.2s;
+    }
+    .arch-layer:hover { border-color: var(--text-dim); }
+    .arch-layer-tag {
+      font-family: var(--mono);
+      font-size: 10px;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      transform: rotate(180deg);
+      padding: 12px 8px;
+      background: var(--bg3);
+      color: var(--text-dim);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      min-width: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .arch-layer-body {
+      flex: 1;
+      background: var(--bg2);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .arch-chip {
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 5px;
+      white-space: nowrap;
+    }
+    .chip-rust   { background: rgba(206,111,57,0.12); color: var(--rust);   border: 1px solid var(--rust-dim); }
+    .chip-teal   { background: rgba(45,212,191,0.08); color: var(--teal);   border: 1px solid var(--teal-dim); }
+    .chip-purple { background: rgba(167,139,250,0.08); color: var(--purple); border: 1px solid var(--purple-dim); }
+    .chip-green  { background: rgba(74,222,128,0.08); color: var(--green);  border: 1px solid var(--green-dim); }
+    .chip-amber  { background: rgba(251,191,36,0.08); color: var(--amber);  border: 1px solid #92400e; }
+    .chip-gray   { background: var(--bg3); color: var(--text-muted); border: 1px solid var(--border); }
+
+    .layer-rust   .arch-layer-tag { color: var(--rust); }
+    .layer-teal   .arch-layer-tag { color: var(--teal); }
+    .layer-purple .arch-layer-tag { color: var(--purple); }
+    .layer-green  .arch-layer-tag { color: var(--green); }
+    .layer-amber  .arch-layer-tag { color: var(--amber); }
+
+    /* ── SSR PIPELINE DEMO ── */
+    .pipeline {
+      margin: 2rem 0;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .pipeline-header {
+      background: var(--bg3);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .pipeline-header span {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .dot-red    { background: #ff5f57; }
+    .dot-yellow { background: #febc2e; }
+    .dot-green  { background: #28c840; }
+    .pipeline-body { padding: 1.4rem; }
+    .pipeline-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .pipe-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      opacity: 0;
+      transform: translateX(-8px);
+      transition: opacity 0.3s, transform 0.3s;
+    }
+    .pipe-step.visible { opacity: 1; transform: translateX(0); }
+    .pipe-step:last-child { border-bottom: none; }
+    .pipe-num {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-dim);
+      min-width: 18px;
+      padding-top: 2px;
+    }
+    .pipe-label {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text);
+      flex: 1;
+    }
+    .pipe-label small {
+      display: block;
+      color: var(--text-muted);
+      font-size: 11px;
+      margin-top: 2px;
+      font-family: var(--sans);
+      font-weight: 300;
+    }
+    .pipe-tag {
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .run-btn {
+      margin-top: 1rem;
+      font-family: var(--mono);
+      font-size: 12px;
+      background: var(--surface);
+      color: var(--teal);
+      border: 1px solid var(--teal-dim);
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .run-btn:hover { background: rgba(45,212,191,0.08); }
+
+    /* ── CODE BLOCK ── */
+    .code-block {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 1.5rem 0;
+      font-family: var(--mono);
+      font-size: 12.5px;
+    }
+    .code-header {
+      background: var(--bg3);
+      padding: 8px 16px;
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .code-filename { color: var(--text-muted); font-size: 11px; }
+    .code-lang {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .code-body {
+      padding: 1.2rem 1.4rem;
+      overflow-x: auto;
+      line-height: 1.7;
+      white-space: pre;
+    }
+    .kw  { color: #c792ea; }
+    .fn  { color: #82aaff; }
+    .str { color: #c3e88d; }
+    .cm  { color: var(--text-dim); font-style: italic; }
+    .ty  { color: var(--amber); }
+    .num { color: #f78c6c; }
+    .mac { color: var(--rust); }
+
+    /* ── ISSUES CARDS ── */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+      margin: 1.5rem 0;
+    }
+    .issue-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.2rem;
+      transition: border-color 0.2s, transform 0.15s;
+    }
+    .issue-card:hover { border-color: var(--text-dim); transform: translateY(-2px); }
+    .issue-top {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 0.7rem;
+    }
+    .issue-tag {
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.04em;
+    }
+    .tag-bug      { background: rgba(226,76,74,0.12); color: #f87171; border: 1px solid rgba(226,76,74,0.3); }
+    .tag-perf     { background: rgba(251,191,36,0.1); color: var(--amber); border: 1px solid rgba(251,191,36,0.25); }
+    .tag-dx       { background: rgba(45,212,191,0.08); color: var(--teal); border: 1px solid var(--teal-dim); }
+    .issue-num    { font-family: var(--mono); font-size: 11px; color: var(--text-dim); }
+    .issue-title  { font-size: 13.5px; font-weight: 500; margin-bottom: 0.5rem; line-height: 1.4; }
+    .issue-body   { font-size: 12.5px; color: var(--text-muted); line-height: 1.6; }
+
+    /* ── PLAN PAGE ── */
+    .timeline {
+      position: relative;
+      padding-left: 2rem;
+      margin: 2rem 0;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 7px; top: 0; bottom: 0;
+      width: 1px;
+      background: var(--border);
+    }
+    .tl-item {
+      position: relative;
+      margin-bottom: 2rem;
+    }
+    .tl-dot {
+      position: absolute;
+      left: -2rem;
+      top: 4px;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: var(--bg);
+      border: 2px solid var(--border);
+      transition: border-color 0.2s;
+    }
+    .tl-item:hover .tl-dot { border-color: var(--rust); }
+    .tl-dot.done  { background: var(--teal); border-color: var(--teal); }
+    .tl-dot.active{ background: var(--rust); border-color: var(--rust); }
+    .tl-week {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 3px;
+    }
+    .tl-title {
+      font-weight: 500;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+    .tl-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+      letter-spacing: 0.04em;
+    }
+    footer a { color: var(--rust); text-decoration: none; }
+    footer a:hover { color: var(--teal); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      .bench-strip { grid-template-columns: repeat(2, 1fr); }
+      .nav-links { display: none; }
+    }
+
+    /* ── ENTRY ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .hero > * {
+      animation: fadeUp 0.5s both;
+    }
+    .hero > *:nth-child(1) { animation-delay: 0.05s; }
+    .hero > *:nth-child(2) { animation-delay: 0.12s; }
+    .hero > *:nth-child(3) { animation-delay: 0.2s; }
+    .hero > *:nth-child(4) { animation-delay: 0.28s; }
+
+    /* noise overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 999;
+      opacity: 0.4;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <div class="nav-logo">
+    Meta<span>SSR</span>
+    <span class="nav-badge">GSoC 2025</span>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#" class="active" onclick="show('home',this)">Overview</a></li>
+    <li><a href="#" onclick="show('arch',this)">Architecture</a></li>
+    <li><a href="#" onclick="show('pipeline',this)">SSR Pipeline</a></li>
+    <li><a href="#" onclick="show('issues',this)">Pain Points</a></li>
+    <li><a href="#" onclick="show('plan',this)">GSoC Plan</a></li>
+  </ul>
+</nav>
+
+<!-- ══════════════════════════════════════
+     PAGE: HOME
+═══════════════════════════════════════ -->
+<div id="home" class="page active">
+  <div class="hero">
+    <div class="hero-tag">High-performance SSR · Rust + React + MetaCall</div>
+    <h1>Server-Side Rendering<br/>at <em>polyglot</em> speed.<br/>Powered by <strong>Rust</strong>.</h1>
+    <p class="hero-sub">
+      MetaSSR renders React components on the backend through the MetaCall polyglot runtime —
+      achieving <strong style="color:var(--teal)">31× faster throughput</strong> than Next.js
+      while keeping zero socket errors under high concurrency.
+    </p>
+    <div class="hero-actions">
+      <button class="btn btn-primary" onclick="show('pipeline', document.querySelectorAll('.nav-links a')[2])">
+        ▶ Watch SSR Pipeline
+      </button>
+      <button class="btn btn-ghost" onclick="show('arch', document.querySelectorAll('.nav-links a')[1])">
+        View Architecture →
+      </button>
+    </div>
+  </div>
+
+  <div class="bench-strip">
+    <div class="bench-item">
+      <div class="bench-num">98k</div>
+      <div class="bench-label">Req / sec</div>
+      <div class="bench-vs">vs 3.1k Next.js</div>
+    </div>
+    <div class="bench-item">
+      <div class="bench-num">8ms</div>
+      <div class="bench-label">Avg latency</div>
+      <div class="bench-vs">vs 119ms Next.js</div>
+    </div>
+    <div class="bench-item">
+      <div class="bench-num">31×</div>
+      <div class="bench-label">Faster</div>
+      <div class="bench-vs">12 threads · 1k conn</div>
+    </div>
+    <div class="bench-item">
+      <div class="bench-num">0</div>
+      <div class="bench-label">Socket errors</div>
+      <div class="bench-vs">vs 239 in Next.js</div>
+    </div>
+    <div class="bench-item">
+      <div class="bench-num">134×</div>
+      <div class="bench-label">Higher transfer</div>
+      <div class="bench-vs">4.98 GB/s vs 37 MB/s</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <p class="section-label">What this demo covers</p>
+    <h2 class="section-title">A deep-dive into MetaSSR internals</h2>
+    <p class="section-body">
+      This site walks through the full internal integration architecture of MetaSSR —
+      from the Axum HTTP layer down to the MetaCall polyglot bridge and the React
+      renderToString pipeline. Each tab is a different lens on the same codebase.
+    </p>
+    <div class="cards-grid">
+      <div class="issue-card" onclick="show('arch', document.querySelectorAll('.nav-links a')[1])" style="cursor:pointer">
+        <div class="issue-top">
+          <span class="issue-tag tag-dx">Architecture</span>
+        </div>
+        <div class="issue-title">5-layer integration map</div>
+        <div class="issue-body">Client → CLI → Rust crates → Polyglot bridge → TS/React. Every crate in context.</div>
+      </div>
+      <div class="issue-card" onclick="show('pipeline', document.querySelectorAll('.nav-links a')[2])" style="cursor:pointer">
+        <div class="issue-top">
+          <span class="issue-tag tag-perf">Pipeline</span>
+        </div>
+        <div class="issue-title">SSR request lifecycle</div>
+        <div class="issue-body">Step-by-step: how a browser request becomes a server-rendered HTML string.</div>
+      </div>
+      <div class="issue-card" onclick="show('issues', document.querySelectorAll('.nav-links a')[3])" style="cursor:pointer">
+        <div class="issue-top">
+          <span class="issue-tag tag-bug">Pain Points</span>
+        </div>
+        <div class="issue-title">3 core instability zones</div>
+        <div class="issue-body">The single-thread FFI bug, dev mode fragility, and error crate gaps.</div>
+      </div>
+    </div>
+  </div>
+  <footer>
+    Built as a GSoC 2025 pre-application demo ·
+    <a href="https://github.com/metacall/metassr" target="_blank">metacall/metassr</a>
+    · [Your Name]
+  </footer>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE: ARCHITECTURE
+═══════════════════════════════════════ -->
+<div id="arch" class="page">
+  <div class="section">
+    <p class="section-label">Internal Integration Architecture</p>
+    <h2 class="section-title">Five-layer system overview</h2>
+    <p class="section-body">
+      Each layer has a distinct responsibility. The Rust core never touches JS directly —
+      it delegates entirely through the MetaCall polyglot bridge, maintaining a clean
+      memory-safety boundary.
+    </p>
+
+    <div class="arch-stack">
+
+      <div class="arch-layer layer-teal">
+        <div class="arch-layer-tag">Client</div>
+        <div class="arch-layer-body">
+          <span class="arch-chip chip-teal">Browser</span>
+          <span class="arch-chip chip-gray">HTTP GET /path</span>
+          <span class="arch-chip chip-gray">server-rendered HTML</span>
+          <span class="arch-chip chip-gray">hydration scripts</span>
+        </div>
+      </div>
+
+      <div class="arch-layer layer-amber">
+        <div class="arch-layer-tag">CLI</div>
+        <div class="arch-layer-body">
+          <span class="arch-chip chip-amber">metassr-cli</span>
+          <span class="arch-chip chip-gray">dev (watch + hot-reload)</span>
+          <span class="arch-chip chip-gray">build (TSX → .dist/)</span>
+          <span class="arch-chip chip-gray">start (Axum spawn)</span>
+          <span class="arch-chip chip-gray">tests/ · CI/CD</span>
+        </div>
+      </div>
+
+      <div class="arch-layer layer-rust">
+        <div class="arch-layer-tag">Rust core</div>
+        <div class="arch-layer-body">
+          <span class="arch-chip chip-rust">web-server</span>
+          <span class="arch-chip chip-rust">pages</span>
+          <span class="arch-chip chip-rust">html-generator</span>
+          <span class="arch-chip chip-rust">cache / Arc&lt;DashMap&gt;</span>
+          <span class="arch-chip chip-rust">error crate</span>
+          <span class="arch-chip chip-rust">site-builder</span>
+        </div>
+      </div>
+
+      <div class="arch-layer layer-purple">
+        <div class="arch-layer-tag">Bridge</div>
+        <div class="arch-layer-body">
+          <span class="arch-chip chip-purple">metacall-rs (FFI)</span>
+          <span class="arch-chip chip-gray">initialize()</span>
+          <span class="arch-chip chip-gray">load_from_file("ts", …)</span>
+          <span class="arch-chip chip-gray">metacall::call()</span>
+          <span class="arch-chip chip-purple">MetaCall Core (C/C++)</span>
+          <span class="arch-chip chip-gray">ts_loader · type marshalling</span>
+        </div>
+      </div>
+
+      <div class="arch-layer layer-green">
+        <div class="arch-layer-tag">TS / React</div>
+        <div class="arch-layer-body">
+          <span class="arch-chip chip-green">ts_loader</span>
+          <span class="arch-chip chip-gray">transpiles .tsx at runtime</span>
+          <span class="arch-chip chip-green">renderToString</span>
+          <span class="arch-chip chip-gray">Page(props) → HTML string</span>
+          <span class="arch-chip chip-gray">react-dom/server</span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-filename">crates/pages/src/lib.rs  (simplified)</span>
+        <span class="code-lang chip-rust">Rust</span>
+      </div>
+      <div class="code-body"><span class="cm">// pages crate calls into MetaCall to invoke the TSX page component</span>
+<span class="kw">pub async fn</span> <span class="fn">render_page</span>(route: &<span class="ty">str</span>, props: <span class="ty">Value</span>) -> <span class="ty">Result</span>&lt;<span class="ty">HtmlOutput</span>&gt; {
+    <span class="kw">let</span> page_fn = registry.<span class="fn">get</span>(route)?;
+
+    <span class="cm">// cross the Rust ↔ C FFI boundary into MetaCall runtime</span>
+    <span class="kw">let</span> html: <span class="ty">String</span> = <span class="fn">metacall</span>(page_fn, &[props])
+        .<span class="fn">map_err</span>(|e| <span class="ty">RenderError</span>::<span class="fn">MetaCallFailed</span>(e))?;
+
+    <span class="ty">HtmlOutput</span>::<span class="fn">new</span>(html).<span class="fn">inject_hydration</span>()
+}
+</div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-filename">pages/index.tsx  (user's page component)</span>
+        <span class="code-lang chip-green">TypeScript</span>
+      </div>
+      <div class="code-body"><span class="kw">import</span> React <span class="kw">from</span> <span class="str">'react'</span>;
+
+<span class="kw">interface</span> <span class="ty">Props</span> { title: <span class="ty">string</span>; items: <span class="ty">string</span>[] }
+
+<span class="kw">export default function</span> <span class="fn">HomePage</span>({ title, items }: <span class="ty">Props</span>) {
+  <span class="kw">return</span> (
+    &lt;<span class="fn">main</span>&gt;
+      &lt;<span class="fn">h1</span>&gt;{title}&lt;/<span class="fn">h1</span>&gt;
+      &lt;<span class="fn">ul</span>&gt;{items.<span class="fn">map</span>(i =&gt; &lt;<span class="fn">li</span> key={i}&gt;{i}&lt;/<span class="fn">li</span>&gt;)}&lt;/<span class="fn">ul</span>&gt;
+    &lt;/<span class="fn">main</span>&gt;
+  );
+}
+<span class="cm">// MetaCall's ts_loader exposes this as a callable fn from Rust</span>
+</div>
+    </div>
+  </div>
+  <footer>
+    <a href="https://github.com/metacall/metassr" target="_blank">metacall/metassr</a>
+    · [Your Name] · GSoC 2025
+  </footer>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE: PIPELINE
+═══════════════════════════════════════ -->
+<div id="pipeline" class="page">
+  <div class="section">
+    <p class="section-label">SSR Request Lifecycle</p>
+    <h2 class="section-title">From HTTP request to rendered HTML</h2>
+    <p class="section-body">
+      Click "Run pipeline" to step through how a single browser request
+      travels through Axum → pages → FFI bridge → ts_loader → React →
+      back to the client as a complete HTML document.
+    </p>
+
+    <div class="pipeline">
+      <div class="pipeline-header">
+        <div class="dot dot-red"></div>
+        <div class="dot dot-yellow"></div>
+        <div class="dot dot-green"></div>
+        <span>metassr  ·  request lifecycle</span>
+      </div>
+      <div class="pipeline-body">
+        <div class="pipeline-steps" id="pipeSteps">
+
+          <div class="pipe-step">
+            <div class="pipe-num">01</div>
+            <div class="pipe-label">
+              Browser sends <code style="color:var(--teal)">GET /about</code>
+              <small>HTTP request hits the Axum router on Tokio's async runtime</small>
+            </div>
+            <span class="pipe-tag chip-teal">client</span>
+          </div>
+
+          <div class="pipe-step">
+            <div class="pipe-num">02</div>
+            <div class="pipe-label">
+              <code style="color:var(--rust)">web-server</code> crate matches route
+              <small>Axum handler dispatches to the pages crate router</small>
+            </div>
+            <span class="pipe-tag chip-rust">Rust</span>
+          </div>
+
+          <div class="pipe-step">
+            <div class="pipe-num">03</div>
+            <div class="pipe-label">
+              <code style="color:var(--rust)">cache</code> lookup — Arc&lt;DashMap&gt;
+              <small>If pre-rendered HTML exists and TTL is valid, return immediately</small>
+            </div>
+            <span class="pipe-tag chip-amber">cache hit?</span>
+          </div>
+
+          <div class="pipe-step">
+            <div class="pipe-num">04</div>
+            <div class="pipe-label">
+              <code style="color:var(--rust)">pages</code> crate resolves component fn
+              <small>File-system registry maps /about → AboutPage export</small>
+            </div>
+            <span class="pipe-tag chip-rust">Rust</span>
+          </div>
+
+          <div class="pipe-step">
+            <div class="pipe-num">05</div>
+            <div class="pipe-label">
+              <code style="color:var(--purple)">metacall::call()</code> crosses FFI boundary
+              <small>metacall-rs invokes MetaCall Core with fn name + serialized props</small>
+            </div>
+            <span class="pipe-tag chip-purple">FFI</span>
+          </div>
+
+          <div class="pipe-step">
+            <div class="pipe-num">06</div>
+            <div class="pipe-label">
+              <code style="color:var(--green)">ts_loader</code> invokes the TSX export
+              <small>MetaCall Core unmarshals props, calls the Node.js-hosted function</small>
+            </div>
+            <span class="pipe-tag chip-green">Node.js</span>
+          </div>
+
+          <div class="pipe-step">
+            <div class="pipe-num">07</div>
+            <div class="pipe-label">
+              <code style="color:var(--green)">renderToString</code> produces HTML
+              <small>React renders the component tree to a raw HTML string — no VDOM</small>
+            </div>
+            <span class="pipe-tag chip-green">React</span>
+          </div>
+
+          <div class="pipe-step">
+            <div class="pipe-num">08</div>
+            <div class="pipe-label">
+              HTML string returns through FFI back to Rust
+              <small>metacall-rs marshals the string return value; error propagated via ?</small>
+            </div>
+            <span class="pipe-tag chip-purple">FFI</span>
+          </div>
+
+          <div class="pipe-step">
+            <div class="pipe-num">09</div>
+            <div class="pipe-label">
+              <code style="color:var(--rust)">html-generator</code> wraps + injects hydration
+              <small>HtmlOutput builder adds &lt;script&gt; tags for client-side React takeover</small>
+            </div>
+            <span class="pipe-tag chip-rust">Rust</span>
+          </div>
+
+          <div class="pipe-step">
+            <div class="pipe-num">10</div>
+            <div class="pipe-label">
+              Response cached + sent to browser
+              <small>Arc&lt;DashMap&gt; stores the result; Axum sends complete HTML response</small>
+            </div>
+            <span class="pipe-tag chip-teal">done</span>
+          </div>
+
+        </div>
+        <button class="run-btn" id="runBtn" onclick="runPipeline()">▶ Run pipeline</button>
+      </div>
+    </div>
+  </div>
+  <footer>
+    <a href="https://github.com/metacall/metassr" target="_blank">metacall/metassr</a>
+    · [Your Name] · GSoC 2025
+  </footer>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE: ISSUES
+═══════════════════════════════════════ -->
+<div id="issues" class="page">
+  <div class="section">
+    <p class="section-label">Current Pain Points</p>
+    <h2 class="section-title">Three instability zones to fix</h2>
+    <p class="section-body">
+      After tracing the codebase, three distinct problems stand out as the root causes
+      behind the failing tests, broken dev mode, and deployment friction.
+    </p>
+
+    <div class="cards-grid">
+      <div class="issue-card">
+        <div class="issue-top">
+          <span class="issue-tag tag-bug">Critical bug</span>
+          <span class="issue-num">#1</span>
+        </div>
+        <div class="issue-title">Single-thread constraint vs Tokio test harness</div>
+        <div class="issue-body">
+          metacall-rs requires initialize() and destroy() on the same OS thread.
+          Tokio's multi-threaded test runner violates this — causing most integration tests
+          to deadlock or panic before the test logic even runs.
+        </div>
+      </div>
+
+      <div class="issue-card">
+        <div class="issue-top">
+          <span class="issue-tag tag-dx">Dev experience</span>
+          <span class="issue-num">#2</span>
+        </div>
+        <div class="issue-title">Dev mode errors don't surface to overlay</div>
+        <div class="issue-body">
+          The watch/hot-reload path swallows errors from the metacall-rs layer.
+          Developers see a blank page or silent failure instead of a useful error overlay,
+          making the dev loop painful to iterate on.
+        </div>
+      </div>
+
+      <div class="issue-card">
+        <div class="issue-top">
+          <span class="issue-tag tag-bug">Error handling</span>
+          <span class="issue-num">#3</span>
+        </div>
+        <div class="issue-title">Error crate gaps across crate boundaries</div>
+        <div class="issue-body">
+          The thiserror-based error types don't propagate cleanly between the pages,
+          html-generator, and web-server crates. Errors deep in the FFI bridge often
+          surface as opaque panics instead of typed, actionable messages.
+        </div>
+      </div>
+    </div>
+
+    <div class="code-block" style="margin-top:2rem">
+      <div class="code-header">
+        <span class="code-filename">The root cause — thread isolation problem</span>
+        <span class="code-lang chip-rust">Rust</span>
+      </div>
+      <div class="code-body"><span class="cm">// metacall-rs REQUIRES init + destroy on the SAME thread</span>
+<span class="cm">// Tokio spawns tests on arbitrary worker threads → deadlock</span>
+
+<span class="cm">// ❌  current test setup (fails)</span>
+<span class="mac">#[tokio::test]</span>
+<span class="kw">async fn</span> <span class="fn">test_render_page</span>() {
+    <span class="fn">metacall_initialize</span>();  <span class="cm">// thread A</span>
+    <span class="kw">let</span> html = <span class="fn">render_page</span>(<span class="str">"/home"</span>, json!({})).<span class="fn">await</span>;
+    <span class="fn">metacall_destroy</span>();     <span class="cm">// may run on thread B → panic</span>
+}
+
+<span class="cm">// ✅  proposed fix — pin to dedicated thread</span>
+<span class="mac">#[test]</span>
+<span class="kw">fn</span> <span class="fn">test_render_page</span>() {
+    <span class="kw">let</span> rt = <span class="ty">Runtime</span>::<span class="fn">new_current_thread</span>();
+    rt.<span class="fn">block_on</span>(<span class="kw">async</span> {
+        <span class="fn">metacall_initialize</span>();
+        <span class="kw">let</span> html = <span class="fn">render_page</span>(<span class="str">"/home"</span>, json!({})).<span class="fn">await</span>;
+        <span class="fn">metacall_destroy</span>();  <span class="cm">// guaranteed same thread</span>
+        <span class="fn">assert</span>(html.<span class="fn">is_ok</span>());
+    });
+}
+</div>
+    </div>
+  </div>
+  <footer>
+    <a href="https://github.com/metacall/metassr" target="_blank">metacall/metassr</a>
+    · [Your Name] · GSoC 2025
+  </footer>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE: GSoC PLAN
+═══════════════════════════════════════ -->
+<div id="plan" class="page">
+  <div class="section">
+    <p class="section-label">GSoC 2025 Proposal</p>
+    <h2 class="section-title">12-week stabilization plan</h2>
+    <p class="section-body">
+      Roughly three phases: fix the test harness and failing tests first,
+      then stabilize dev mode, then polish error handling and CI/CD for production readiness.
+    </p>
+
+    <div class="timeline">
+
+      <div class="tl-item">
+        <div class="tl-dot done"></div>
+        <div class="tl-week">Pre-GSoC · Now</div>
+        <div class="tl-title">Codebase study + architecture mapping</div>
+        <div class="tl-desc">Traced all crates, identified the FFI thread constraint, built this demo, sent mentor intro.</div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot active"></div>
+        <div class="tl-week">Week 1–2 · Community bonding</div>
+        <div class="tl-title">Reproduce all failing tests + document root causes</div>
+        <div class="tl-desc">Set up local MetaCall dev env (Nix flake), run test suite, log each failure against crate + thread context.</div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-week">Week 3–4</div>
+        <div class="tl-title">Fix metacall-rs single-thread test harness</div>
+        <div class="tl-desc">Introduce a dedicated thread wrapper for MetaCall lifecycle in tests, ensure init/destroy on same OS thread.</div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-week">Week 5–6</div>
+        <div class="tl-title">Stabilize integration + unit test coverage</div>
+        <div class="tl-desc">Fix remaining failing tests, add missing coverage for pages routing, html-generator output, and cache TTL logic.</div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-week">Week 7–8</div>
+        <div class="tl-title">Dev mode: hot reload + error overlay</div>
+        <div class="tl-desc">Wire error propagation from metacall-rs through to the dev overlay. Ensure watch restarts cleanly on TSX change.</div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-week">Week 9–10</div>
+        <div class="tl-title">Error crate: typed errors across all boundaries</div>
+        <div class="tl-desc">Audit ? propagation from ts_loader → metacall-rs → pages → web-server. Replace opaque panics with thiserror variants.</div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-week">Week 11–12</div>
+        <div class="tl-title">CI/CD hardening + production build validation</div>
+        <div class="tl-desc">GitHub Actions matrix for Linux/macOS, Docker build smoke test, end-to-end deploy validation. Final documentation pass.</div>
+      </div>
+
+    </div>
+  </div>
+  <footer>
+    <a href="https://github.com/metacall/metassr" target="_blank">metacall/metassr</a>
+    · [Your Name] · GSoC 2025
+  </footer>
+</div>
+
+<script>
+  function show(pageId, link) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+    if (link) link.classList.add('active');
+    window.scrollTo(0, 0);
+  }
+
+  function runPipeline() {
+    const steps = document.querySelectorAll('.pipe-step');
+    const btn = document.getElementById('runBtn');
+    steps.forEach(s => s.classList.remove('visible'));
+    btn.textContent = '⟳ Running…';
+    btn.disabled = true;
+    steps.forEach((step, i) => {
+      setTimeout(() => {
+        step.classList.add('visible');
+        if (i === steps.length - 1) {
+          btn.textContent = '▶ Run again';
+          btn.disabled = false;
+        }
+      }, i * 280);
+    });
+  }
+
+  // auto-run pipeline when that tab is opened
+  document.querySelectorAll('.nav-links a').forEach((a, i) => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      const pages = ['home','arch','pipeline','issues','plan'];
+      show(pages[i], a);
+      if (pages[i] === 'pipeline') setTimeout(runPipeline, 400);
+    });
+  });
+</script>
+</body>
+</html>
